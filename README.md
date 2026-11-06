@@ -54,3 +54,5 @@ The refined pool has a centered 6.0 × 2.0 m water surface, 220 mm corner radius
 Bedroom refinement: solid runner overlays removed from both beds; original mattress, duvet and pillow geometry is preserved.
 
 Geometry quality pass: source normals rebuilt with a 45-degree crease threshold, keeping architectural corners crisp while smoothing cloth, rounded furniture and curved roof surfaces. Geometry is welded after normal generation and batch compression. The renderer uses up to 2x pixel density, 4-sample offscreen antialiasing, anisotropic textures and subtle fabric normal strength. The dining set is rebuilt as a 1.80 × 0.90 m teak table with six curved rattan chairs.
+
+Circulation correction: sofa rotated to the fixed front glazing and narrowed to approximately 2.4 m, coffee tables relocated, and the bedroom-side entrance approach kept clear. The living-area coffee table leaves approximately 0.94 m between its edge and the bedroom wall.

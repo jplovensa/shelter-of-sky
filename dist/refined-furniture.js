@@ -4,6 +4,7 @@ export function refinedFurniture(parent,pbr,uv){
  const wood=pbr('teak','#e8cda5',.62),linen=pbr('linen','#eee6d6',.94),teal=pbr('linen','#2e6462',.93),clay=pbr('linen','#a85830',.93),cane=pbr('rattan','#dec49a',.84),stone=pbr('lava','#b2afa1',.86),dark=new T.MeshStandardMaterial({color:'#2c3029',metalness:.4,roughness:.52});
  function rounded(name,size,pos,mat,r=.04){const m=new T.Mesh(new RoundedBoxGeometry(...size,5,Math.min(r,Math.min(...size)*.47)),mat);m.name=name;m.position.set(...pos);m.castShadow=m.receiveShadow=true;parent.add(m);m.updateMatrixWorld();uv(m,mat===cane?.5:1.4);return m;}
  function cylinder(name,rt,rb,h,pos,mat){const m=new T.Mesh(new T.CylinderGeometry(rt,rb,h,64),mat);m.name=name;m.position.set(...pos);m.castShadow=m.receiveShadow=true;parent.add(m);return m;}
+ const sofaStart=parent.children.length;
  // Three-piece sofa: structural teak plinth, full-depth seat cushions, separate soft backs.
  rounded('Sofa / teak platform',[1.03,.12,2.75],[-2.78,.255,.02],wood,.035);
  for(const z of [-1.16,1.20])for(const x of [-3.15,-2.42])cylinder('Sofa / tapered teak foot',.035,.026,.20,[x,.10,z],wood);
@@ -11,11 +12,13 @@ export function refinedFurniture(parent,pbr,uv){
  for(const z of [-1.25,1.29])rounded('Sofa / soft upholstered arm',[1.03,.32,.16],[-2.78,.5,z],linen,.07);
  for(const z of [-.78,.02,.82]){rounded('Sofa / sprung seat cushion',[.82,.17,.77],[-2.7,.415,z],linen,.065);const back=rounded('Sofa / loose back cushion',[.18,.42,.75],[-3.06,.67,z],linen,.065);back.rotation.z=-.12;}
  for(const [z,mat] of [[-.83,teal],[.91,clay]]){const c=rounded('Sofa / catalogue accent cushion',[.18,.35,.36],[-2.96,.64,z],mat,.065);c.rotation.z=-.22;c.rotation.x=.12;}
+ // Turn the sofa along the front fixed glazing, outside the bedroom-door approach.
+ const sofaParts=parent.children.slice(sofaStart),sofaGroup=new T.Group();sofaGroup.name='Living sofa / clear bedroom entrance';sofaGroup.position.set(-2.78,0,.02);parent.add(sofaGroup);parent.updateMatrixWorld(true);for(const part of sofaParts)sofaGroup.attach(part);sofaGroup.scale.z=.88;sofaGroup.rotation.y=Math.PI/2;sofaGroup.position.set(-1.95,0,1.0);
  // Sculpted solid-wood coffee tables with rounded edges and recessed pedestal bases.
- cylinder('Coffee table / main turned pedestal',.17,.22,.31,[-1.43,.155,.25],wood);
- const main=cylinder('Coffee table / honed lava top',.43,.42,.065,[-1.43,.342,.25],stone);main.updateMatrixWorld();uv(main,1.2);
- cylinder('Coffee table / companion pedestal',.1,.15,.40,[-1.85,.20,-.53],wood);cylinder('Coffee table / teak companion top',.28,.27,.045,[-1.85,.423,-.53],wood);
- const bowl=cylinder('Coffee table / stoneware bowl',.12,.075,.07,[-1.43,.41,.25],new T.MeshStandardMaterial({color:'#b89a72',roughness:.9}));
+ cylinder('Coffee table / main turned pedestal',.17,.22,.31,[-1.98,.155,-.34],wood);
+ const main=cylinder('Coffee table / honed lava top',.43,.42,.065,[-1.98,.342,-.34],stone);main.updateMatrixWorld();uv(main,1.2);
+ cylinder('Coffee table / companion pedestal',.1,.15,.40,[-1.12,.20,.02],wood);cylinder('Coffee table / teak companion top',.28,.27,.045,[-1.12,.423,.02],wood);
+ const bowl=cylinder('Coffee table / stoneware bowl',.12,.075,.07,[-1.98,.41,-.34],new T.MeshStandardMaterial({color:'#b89a72',roughness:.9}));
  // Three counter stools; tapered legs, a real foot rail and curved cane backrests.
  for(const x of [1.63,2.34,3.05]){rounded('Bar stool / rounded cane seat',[.39,.07,.38],[x,.66,.70],cane,.035);
   for(const dx of [-.145,.145])for(const dz of [-.14,.14]){const leg=cylinder('Bar stool / tapered leg',.018,.012,.64,[x+dx,.32,.7+dz],wood);leg.rotation.z=-dx*.15;}
