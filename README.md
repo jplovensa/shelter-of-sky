@@ -1,5 +1,7 @@
 # Shelter of Sky
 
+**Vercel deployment:** import this repository with the **Other** preset and keep the Root Directory at the repository root. `vercel.json` validates the committed viewer and publishes `dist`; no environment variables or dependency installation are required. See [deployment settings and verification](docs/vercel-deployment.md).
+
 A playable Three.js architectural model based on **echo 3 - 17 FEB1.skp**, with the **Modern Tropical** material direction from **To Breathe — FG Signature Catalogue**, Shelter of Sky interior page 11 and exterior page 6.
 
 ## Explore
