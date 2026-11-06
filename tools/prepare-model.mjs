@@ -1,0 +1,21 @@
+import {smoothSource} from './smooth-normals.mjs';
+import {pathToFileURL} from 'node:url';
+import {writeFileSync,statSync} from 'node:fs';
+const dep=process.env.OPTIMIZER_ROOT||'/private/tmp/veil-optimizer/node_modules';
+const {NodeIO}=await import(pathToFileURL(dep+'/@gltf-transform/core/dist/index.js'));
+const {ALL_EXTENSIONS}=await import(pathToFileURL(dep+'/@gltf-transform/extensions/dist/index.js'));
+const {dedup,weld,normals,prune,meshopt,getBounds,unpartition,flatten,join}=await import(pathToFileURL(dep+'/@gltf-transform/functions/dist/index.js'));
+const {MeshoptEncoder,MeshoptDecoder}=await import(pathToFileURL(dep+'/meshoptimizer/index.js'));
+await MeshoptEncoder.ready;
+const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.encoder':MeshoptEncoder,'meshopt.decoder':MeshoptDecoder});
+const doc=await io.read('dist/assets/shell-source.gltf');
+const root=doc.getRoot().getDefaultScene();
+const describe=n=>({name:n.getName(),bounds:getBounds(n),children:n.listChildren().length});
+const info={bounds:getBounds(root),nodes:root.listChildren().flatMap(n=>n.listChildren().map(describe)),materials:doc.getRoot().listMaterials().map(m=>({name:m.getName(),color:m.getBaseColorFactor(),texture:m.getBaseColorTexture()?.getName()}))};
+writeFileSync('docs/model-analysis.json',JSON.stringify(info,null,2));
+console.log(JSON.stringify(info));
+await doc.transform(dedup(),weld(),normals());smoothSource(doc);await doc.transform(weld(),flatten(),join({keepNamed:false}),prune(),unpartition(),meshopt({encoder:MeshoptEncoder,level:'medium',quantizePosition:16,quantizeNormal:10,quantizeTexcoord:12}));
+await io.write('dist/assets/shelter.glb',doc);
+console.log('Optimized bytes',statSync('dist/assets/shelter.glb').size);
+
+const doorDoc=await io.read("dist/assets/doors-source.gltf");await doorDoc.transform(prune(),dedup(),weld(),normals());smoothSource(doorDoc);await doorDoc.transform(weld(),unpartition(),meshopt({encoder:MeshoptEncoder,level:"medium"}));await io.write("dist/assets/doors.glb",doorDoc);console.log("Doors",statSync("dist/assets/doors.glb").size);

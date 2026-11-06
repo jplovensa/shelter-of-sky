@@ -1,0 +1,33 @@
+{
+  "interactiveDoorSourceNodes": {
+    "8": "social-front",
+    "24": "social-rear",
+    "920": "east-bedroom",
+    "1282": "west-bedroom"
+  },
+  "replacedFurnitureSourceNodes": [
+    26,
+    39,
+    530,
+    541,
+    558,
+    569
+  ],
+  "poolBoundsMetres": {
+    "min": [
+      -2.5376567,
+      -0.17,
+      4.4
+    ],
+    "max": [
+      3.1623434,
+      -0.1,
+      6.1
+    ]
+  },
+  "sourceOffset": [
+    53.4933507,
+    0,
+    -15.9854055
+  ]
+}

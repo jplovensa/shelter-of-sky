@@ -1,0 +1,77 @@
+{
+  "project": "Shelter of Sky",
+  "scheme": "Modern Tropical",
+  "reference": {
+    "catalogue": "To Breathe_FG Signature Catalogue.pdf",
+    "interiorPage": 11,
+    "exteriorPage": 6
+  },
+  "interior": [
+    {
+      "finish": "Light grey microcement",
+      "application": "Interior floors"
+    },
+    {
+      "finish": "Natural teak",
+      "application": "Joinery, furniture frames, tables and vanities"
+    },
+    {
+      "finish": "Dark grey lava stone",
+      "application": "Coffee table and shower trays"
+    },
+    {
+      "finish": "Gloss green zellige",
+      "application": "Kitchen backsplash, vanity and shower walls"
+    },
+    {
+      "finish": "Light terrazzo",
+      "application": "Kitchen worktops and vanity tops"
+    },
+    {
+      "finish": "Matte black metal",
+      "application": "Frames, faucets, showers, foot rails"
+    },
+    {
+      "finish": "Rattan weave",
+      "application": "Chair and stool backs, pendants"
+    },
+    {
+      "finish": "Neutral linen, teal and terracotta",
+      "application": "Seats, cushions and bedding"
+    }
+  ],
+  "exterior": [
+    "Warm beige stucco",
+    "Light travertine",
+    "Natural teak",
+    "Matte black aluminium",
+    "Light grey concrete",
+    "Sand paving",
+    "Dark charcoal shingles"
+  ],
+  "retained": "Original three-pavilion source architecture and detailed bedroom furniture",
+  "proposed": "Rebuilt living and counter furniture, dining furniture, supplementary lighting and complete bathroom fixtures",
+  "water": "Animated, reflective water within the existing shallow pool",
+  "typeface": "Inter throughout",
+  "logo": "Fjall Group RGBA transparent PNG",
+  "trees": "Removed",
+  "dining": {
+    "tableMetres": [
+      1.8,
+      0.9
+    ],
+    "seats": 6,
+    "chairs": "Curved rattan backs, woven seats and splayed teak legs"
+  },
+  "pool": {
+    "waterMetres": [
+      6,
+      2
+    ],
+    "cornerRadiusMetres": 0.22,
+    "copingMetres": 0.24,
+    "basinDepthMetres": 1.1,
+    "type": "Design proposal"
+  },
+  "geometryQuality": "45 degree crease normals; welded geometry; 4x MSAA; up to 2x pixel density; anisotropic textures"
+}

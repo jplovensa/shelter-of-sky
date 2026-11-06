@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+__pycache__/
+dist/assets/villa.*
+dist/assets/geometry_*.bin
+dist/assets/texture_*
+docs/source-thumbnail.png
+docs/modern-tropical-moodboard.png
+docs/optimization.log
+dist/assets/*-source.gltf
+docs/nodes.txt
