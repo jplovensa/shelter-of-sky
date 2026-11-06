@@ -1,0 +1,178 @@
+{
+  "mediterranean": {
+    "page": 8,
+    "source": "To Breathe_FG Signature Catalogue.pdf",
+    "maps": {
+      "wall": {
+        "embeddedImage": "X19.png",
+        "pixels": [
+          143,
+          205
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "stone": {
+        "embeddedImage": "X21.png",
+        "pixels": [
+          143,
+          205
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "oak": {
+        "embeddedImage": "X23.png",
+        "pixels": [
+          143,
+          205
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "cane": {
+        "embeddedImage": "X25.png",
+        "pixels": [
+          122,
+          205
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "concrete": {
+        "embeddedImage": "X27.png",
+        "pixels": [
+          143,
+          205
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "linen": {
+        "embeddedImage": "X29.png",
+        "pixels": [
+          143,
+          205
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "bronze": {
+        "embeddedImage": "X31.png",
+        "pixels": [
+          143,
+          205
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "walnut": {
+        "embeddedImage": "X33.png",
+        "pixels": [
+          122,
+          205
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "marble": {
+        "embeddedImage": "X15.png",
+        "crop": [
+          27,
+          490,
+          168,
+          645
+        ],
+        "diffuse": "Original catalogue kitchen island face crop",
+        "normal": "Flat honed stone response"
+      }
+    }
+  },
+  "scandi": {
+    "page": 10,
+    "source": "To Breathe_FG Signature Catalogue.pdf",
+    "maps": {
+      "wall": {
+        "embeddedImage": "X23.png",
+        "pixels": [
+          89,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "concrete": {
+        "embeddedImage": "X25.png",
+        "pixels": [
+          77,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "stone": {
+        "embeddedImage": "X27.png",
+        "pixels": [
+          89,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "oak": {
+        "embeddedImage": "X29.png",
+        "pixels": [
+          89,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "cane": {
+        "embeddedImage": "X31.png",
+        "pixels": [
+          63,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "linen": {
+        "embeddedImage": "X33.png",
+        "pixels": [
+          77,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "black": {
+        "embeddedImage": "X35.png",
+        "pixels": [
+          77,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "glass": {
+        "embeddedImage": "X37.png",
+        "pixels": [
+          77,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      },
+      "brass": {
+        "embeddedImage": "X39.png",
+        "pixels": [
+          77,
+          114
+        ],
+        "diffuse": "Original embedded catalogue swatch, edge crop only",
+        "normal": "Reference-derived approximation"
+      }
+    }
+  }
+}

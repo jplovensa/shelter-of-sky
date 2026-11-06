@@ -62,3 +62,9 @@ Circulation correction: sofa rotated to the fixed front glazing and narrowed to 
 All eight architectural door assemblies are interactive: living front/rear, both bedroom terrace doors, both bedroom entry panels and both private dressing panels. Interior sliding panels carry their handles and trolleys along the fixed tracks. Every door is available through the Doors list or Open all doors, as well as click/F interaction in walkthrough mode.
 
 Four bedside table lamps sit on the existing bedroom side tables. Each lamp can be switched by clicking its fixture or its control. West/east bedrooms have independent brightness controls, with shared 2200–4000 K warmth and Reading, Relax and Sleep presets. Lamps use warm glowing linen shades, local fill and soft shadowed pools of light on the tables and bedding. General villa lighting remains a separate control. The white interface text sits on dark translucent panels for legibility.
+
+## Three catalogue collections
+
+Choose Modern Tropical (catalogue p. 11), Mediterranean (p. 8) or Scandi-Asian (p. 10) in **Design collection**. Each has its own furniture geometry, original catalogue colour textures, coordinated source finishes, kitchen and bathroom details, pendants and bedside fixture styling. Room, door, light and bedside settings carry across collection changes. **Dining for six** provides a dedicated furniture view. Snapshot filenames include the collection name.
+
+Direct links use `?scheme=mediterranean` or `?scheme=scandi`. See `docs/catalogue-collections.md` for the reference mapping and reconstruction limits, and `dist/assets/schemes/provenance.json` for the exact PDF images used.

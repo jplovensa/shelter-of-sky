@@ -1,0 +1,42 @@
+[
+  {
+    "scheme": "mediterranean",
+    "diningSeats": 6,
+    "meshCount": 245,
+    "triangles": 291828,
+    "sofaBounds": {
+      "min": [
+        -3.160000003576279,
+        0.1300000013411045,
+        0.2550000119209289
+      ],
+      "max": [
+        -0.7399999964237212,
+        0.8350000047683716,
+        1.4900000095367432
+      ]
+    },
+    "bedroomApproachWidthMetres": 0.9,
+    "blockedApproach": []
+  },
+  {
+    "scheme": "scandi",
+    "diningSeats": 6,
+    "meshCount": 242,
+    "triangles": 269008,
+    "sofaBounds": {
+      "min": [
+        -3.160000003576279,
+        1.7881393449270533e-9,
+        0.2550000119209289
+      ],
+      "max": [
+        -0.7399999964237212,
+        0.8350000047683716,
+        1.4900000095367432
+      ]
+    },
+    "bedroomApproachWidthMetres": 0.9,
+    "blockedApproach": []
+  }
+]
