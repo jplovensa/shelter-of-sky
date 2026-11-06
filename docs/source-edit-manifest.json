@@ -1,10 +1,124 @@
 {
-  "interactiveDoorSourceNodes": {
-    "8": "social-front",
-    "24": "social-rear",
-    "920": "east-bedroom",
-    "1282": "west-bedroom"
-  },
+  "interactiveDoors": [
+    {
+      "sourceNodes": [
+        8
+      ],
+      "doorId": "social-front",
+      "doorLabel": "Living terrace door",
+      "doorType": "swing",
+      "doorTravel": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "sourceNodes": [
+        24
+      ],
+      "doorId": "social-rear",
+      "doorLabel": "Living rear door",
+      "doorType": "slide",
+      "doorTravel": [
+        1.35,
+        0,
+        0
+      ]
+    },
+    {
+      "sourceNodes": [
+        920
+      ],
+      "doorId": "east-bedroom",
+      "doorLabel": "East terrace door",
+      "doorType": "swing",
+      "doorTravel": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "sourceNodes": [
+        1282
+      ],
+      "doorId": "west-bedroom",
+      "doorLabel": "West terrace door",
+      "doorType": "swing",
+      "doorTravel": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "sourceNodes": [
+        778,
+        780,
+        806,
+        827
+      ],
+      "doorId": "east-entry",
+      "doorLabel": "East bedroom entry",
+      "doorType": "slide",
+      "doorTravel": [
+        0,
+        0,
+        0.97
+      ]
+    },
+    {
+      "sourceNodes": [
+        861,
+        863,
+        889,
+        910
+      ],
+      "doorId": "east-private",
+      "doorLabel": "East dressing door",
+      "doorType": "slide",
+      "doorTravel": [
+        -1.02,
+        0,
+        0
+      ]
+    },
+    {
+      "sourceNodes": [
+        1140,
+        1142,
+        1168,
+        1189
+      ],
+      "doorId": "west-entry",
+      "doorLabel": "West bedroom entry",
+      "doorType": "slide",
+      "doorTravel": [
+        0,
+        0,
+        0.97
+      ]
+    },
+    {
+      "sourceNodes": [
+        1223,
+        1225,
+        1251,
+        1272
+      ],
+      "doorId": "west-private",
+      "doorLabel": "West dressing door",
+      "doorType": "slide",
+      "doorTravel": [
+        1.02,
+        0,
+        0
+      ]
+    }
+  ],
+  "doorCount": 8,
+  "fixedTracksPreserved": true,
   "replacedFurnitureSourceNodes": [
     26,
     39,

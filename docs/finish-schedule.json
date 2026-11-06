@@ -73,5 +73,25 @@
     "basinDepthMetres": 1.1,
     "type": "Design proposal"
   },
-  "geometryQuality": "45 degree crease normals; welded geometry; 4x MSAA; up to 2x pixel density; anisotropic textures"
+  "geometryQuality": "45 degree crease normals; welded geometry; 4x MSAA; up to 2x pixel density; anisotropic textures",
+  "interactiveDoors": 8,
+  "bedsideLighting": {
+    "lamps": 4,
+    "bedrooms": [
+      "west",
+      "east"
+    ],
+    "warmthKelvin": [
+      2200,
+      4000
+    ],
+    "controls": [
+      "individual lamp power",
+      "per-bedroom dimmer",
+      "Reading",
+      "Relax",
+      "Sleep"
+    ]
+  },
+  "interface": "White text on dark translucent surfaces"
 }

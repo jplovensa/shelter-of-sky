@@ -1,7 +1,12 @@
 import json,copy
 from pathlib import Path
 p=Path('dist/assets');g=json.loads((p/'villa.gltf').read_text())
-doors={8:'social-front',24:'social-rear',920:'east-bedroom',1282:'west-bedroom'}
+# Animated leaves and their attached hardware; surrounding tracks and stoppers stay static.
+def meta(id,label,type='swing',travel=None):return {'doorId':id,'doorLabel':label,'doorType':type,'doorTravel':travel or [0,0,0]}
+assemblies=[([8],meta('social-front','Living terrace door')),([24],meta('social-rear','Living rear door','slide',[1.35,0,0])),([920],meta('east-bedroom','East terrace door')),([1282],meta('west-bedroom','West terrace door')),
+([778,780,806,827],meta('east-entry','East bedroom entry','slide',[0,0,.97])),([861,863,889,910],meta('east-private','East dressing door','slide',[-1.02,0,0])),
+([1140,1142,1168,1189],meta('west-entry','West bedroom entry','slide',[0,0,.97])),([1223,1225,1251,1272],meta('west-private','West dressing door','slide',[1.02,0,0]))]
+doors={i:data for nodes,data in assemblies for i in nodes}
 replaced={26,39,530,541,558,569}
 def descendants(i):
  r={i}
@@ -24,6 +29,6 @@ ancestors(0)
 d=copy.deepcopy(g)
 for i,n in enumerate(d['nodes']):
  if 'children'in n:n['children']=[c for c in n['children'] if c in selected]
- if i in doors:n['extras']={'doorId':doors[i],'doorType':'slide' if i==24 else 'swing'}
+ if i in doors:n['extras']=doors[i]
 (p/'doors-source.gltf').write_text(json.dumps(d,separators=(',',':')))
-Path('docs/source-edit-manifest.json').write_text(json.dumps({'interactiveDoorSourceNodes':doors,'replacedFurnitureSourceNodes':sorted(replaced),'poolBoundsMetres':{'min':[-2.5376567,-.17,4.4],'max':[3.1623434,-.1,6.1]},'sourceOffset':[53.4933507,0,-15.9854055]},indent=2))
+Path('docs/source-edit-manifest.json').write_text(json.dumps({'interactiveDoors':[{'sourceNodes':nodes,**data} for nodes,data in assemblies],'doorCount':len(assemblies),'fixedTracksPreserved':True,'replacedFurnitureSourceNodes':sorted(replaced),'poolBoundsMetres':{'min':[-2.5376567,-.17,4.4],'max':[3.1623434,-.1,6.1]},'sourceOffset':[53.4933507,0,-15.9854055]},indent=2))
