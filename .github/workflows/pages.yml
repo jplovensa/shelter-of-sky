@@ -1,0 +1,49 @@
+name: Publish Shelter of Sky
+on:
+  push:
+    branches: [main]
+    paths: ['shelter-source.part*']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expand verified source bundle
+        shell: bash
+        run: |
+          if compgen -G 'shelter-source.part*' > /dev/null; then
+            cat shelter-source.part* > /tmp/shelter-source.zip
+            mkdir -p /tmp/shelter-release
+            unzip -oq /tmp/shelter-source.zip -d /tmp/shelter-release
+            cp -R /tmp/shelter-release/. .
+            git add dist docs tools README.md .gitignore
+            git rm shelter-source.part*
+            if ! git diff --cached --quiet; then
+              git -c user.name='Shelter of Sky publisher' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Publish complete Shelter of Sky source and model'
+              git push
+            fi
+          fi
+      - name: Check viewer modules and required assets
+        run: |
+          node --check dist/app.js
+          node --check dist/refined-furniture.js
+          node --check dist/pool.js
+          test -s dist/assets/shelter.glb
+          test -s dist/assets/doors.glb
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4
