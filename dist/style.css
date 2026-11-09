@@ -8,3 +8,169 @@
 body{color:#fff}header{background:linear-gradient(#11231edb,#11231e00)}.identity>div{border-left-color:#ffffff42}.top-right,#room-caption,#room-caption p{color:#fff}#room-caption{text-shadow:0 2px 12px #07170fff;background:linear-gradient(110deg,#17291d00,#11241ca6);padding:18px 22px;border-radius:4px}#panel,footer{background:#15271fe8;border-color:#ffffff24;box-shadow:0 8px 35px #0002}.intro,.board-card i,.source-note,.palette span,.control-note,#hint,.pool-dimensions small{color:#e2ebe2}.rooms button,.rooms span{color:#fff}.rooms button:hover:not(.selected){background:#ffffff1c}button.selected,.rooms button.selected{background:#41664c;color:#fff}.section-title,.eyebrow,summary,label,output,.board-card span,.palette span{color:#fff}.segments{background:#ffffff12}.segments button{color:#fff}.board-card,details,.palette,.pool-dimensions{border-color:#ffffff30}.outline-button{border-color:#ffffff60}.close{background:#1e392de8;color:#fff}dialog{background:#1b3025;color:#fff}.board-bottom p{color:#e1e8df}.board-bottom button{border-color:#ffffff60}.board-bottom a{color:#fff}#loading:before{background:linear-gradient(90deg,#12271cf2,#12271cbd 35%,#12271c18 80%)}.progress{background:#ffffff44}.progress i{background:#b1d4a2}#door-action,#touch-controls button{background:#1d392df5;color:#fff;border:1px solid #ffffff55}#walk-tip{color:#fff;background:#12281cf0}kbd{border-color:#ffffff77}.control-note{font-size:9px;line-height:1.65}.bedside-room{border-top:1px solid #ffffff22;margin-top:15px;padding-top:1px}.warmth-scale{display:flex;justify-content:space-between;font-size:8px;color:#e4ebe1;margin-top:10px}#door-list{display:grid;gap:5px;margin-top:12px}.door-row{display:flex;justify-content:space-between;align-items:center;text-align:left;gap:9px;width:100%;padding:10px 9px;border:1px solid #ffffff22;border-radius:3px;font-size:9px;color:#fff}.door-row span:last-child{color:#d7e9cd;white-space:nowrap}.door-row[aria-pressed=true]{background:#41664c}input[type=range],input[type=checkbox]{accent-color:#b0d6a3}@media(max-width:650px){#panel{background:#15271ffa}#room-caption{max-width:250px;padding:12px}header{background:linear-gradient(#11231ef0,#11231e00)}}
 
 #design-scheme{width:100%;background:#274536;border:1px solid #ffffff44;color:#fff;padding:12px 10px;border-radius:3px;font:11px Inter;cursor:pointer}#design-scheme option{background:#1b3025;color:#fff}#scheme-caption{min-height:30px;line-height:1.7;margin:10px 0 18px}#design-scheme:disabled{opacity:.65;cursor:wait}
+
+/* Phone layout: header, scene caption, walk controller and navigation each have a dedicated area. */
+.phone-label { display: none; }
+.mobile-ui {
+  --phone-left: max(12px, env(safe-area-inset-left));
+  --phone-right: max(12px, env(safe-area-inset-right));
+  --phone-top: max(8px, env(safe-area-inset-top));
+  --phone-bottom: max(8px, env(safe-area-inset-bottom));
+  --phone-dock: calc(var(--phone-bottom) + 62px);
+  --phone-header: calc(var(--phone-top) + 53px);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.mobile-ui .phone-label { display: inline; }
+.mobile-ui .desktop-label, .mobile-ui #status, .mobile-ui #hint, .mobile-ui #walk-tip { display: none; }
+.mobile-ui header {
+  height: var(--phone-header);
+  padding: var(--phone-top) var(--phone-right) 0 var(--phone-left);
+  gap: 8px;
+}
+.mobile-ui .identity { gap: 8px; font-size: 10px; letter-spacing: 1.4px; }
+.mobile-ui .identity .fjall-logo { width: clamp(54px, 17vw, 76px); margin: 0; }
+.mobile-ui .identity > div { padding-left: 8px; }
+.mobile-ui .identity small { display: none; }
+.mobile-ui #panel-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid #ffffff42;
+  border-radius: 8px;
+  background: #15271ff5;
+  font-size: 12px;
+}
+.mobile-ui #panel-toggle[aria-expanded="true"] { background: #41664c; }
+.mobile-ui #panel {
+  top: var(--phone-header);
+  bottom: var(--phone-dock);
+  left: var(--phone-left);
+  right: var(--phone-right);
+  width: auto;
+  max-width: 460px;
+  border-radius: 12px;
+  background: #15271f;
+  overflow: hidden;
+  transition: none;
+}
+.mobile-ui.panel-hidden #panel { visibility: hidden; transform: none; }
+.mobile-ui .panel-scroll { padding: 16px; overscroll-behavior: contain; }
+.mobile-ui #panel h1, .mobile-ui #panel .intro { display: none; }
+.mobile-ui #panel .eyebrow { margin-top: 0; font-size: 10px; }
+.mobile-ui #panel .section-title { font-size: 10px; }
+.mobile-ui #panel :is(summary, label, .rooms span, .control-note, .board-card span, .door-row) { font-size: 13px; }
+.mobile-ui #panel :is(summary, .rooms button, .segments button, .door-row, .toggle, .outline-button) { min-height: 44px; }
+.mobile-ui #panel summary { padding: 12px 0; margin-bottom: 0; }
+.mobile-ui #panel details { padding: 4px 0 10px; }
+.mobile-ui #panel .segments button, .mobile-ui .outline-button { font-size: 12px; }
+.mobile-ui #panel .toggle { gap: 12px; margin: 6px 0; }
+.mobile-ui #panel input[type="checkbox"] { width: 22px; height: 22px; flex: 0 0 auto; }
+.mobile-ui #panel input[type="range"] { height: 32px; margin: 0; }
+.mobile-ui #design-scheme { min-height: 44px; font-size: 16px; }
+.mobile-ui #scheme-caption { min-height: 0; }
+.mobile-ui footer {
+  left: var(--phone-left);
+  right: var(--phone-right);
+  bottom: var(--phone-bottom);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+}
+.mobile-ui footer nav { flex: 1; min-width: 0; }
+.mobile-ui footer nav button {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 0;
+}
+.mobile-ui footer nav span { margin: 0; font-size: 12px; }
+.mobile-ui .tools { gap: 0; border-left: 1px solid #ffffff30; }
+.mobile-ui .tools button { width: 44px; height: 44px; padding: 0; }
+.mobile-ui .tools span { display: none; }
+.mobile-ui #room-caption {
+  top: var(--phone-header);
+  bottom: auto;
+  left: var(--phone-left);
+  right: auto;
+  max-width: calc(100% - var(--phone-left) - var(--phone-right));
+  padding: 8px 12px;
+  text-align: left;
+  background: #15271fd9;
+  border-radius: 8px;
+}
+.mobile-ui #room-caption h2 { font-size: clamp(17px, 5vw, 21px); margin: 3px 0 4px; }
+.mobile-ui #view-number, .mobile-ui #view-description { display: none; }
+.mobile-ui #phone-hint { display: block; font-size: 11px; line-height: 1.4; margin: 0; }
+.mobile-ui:not(.panel-hidden) :is(#room-caption, #walk-controls) { visibility: hidden; }
+.mobile-ui #walk-controls {
+  position: fixed;
+  left: var(--phone-left);
+  right: var(--phone-right);
+  bottom: var(--phone-dock);
+  display: grid;
+  grid-template-columns: auto minmax(0, 148px);
+  grid-template-rows: 1fr auto;
+  justify-content: space-between;
+  align-items: end;
+  gap: 6px;
+  z-index: 5;
+  pointer-events: none;
+}
+.mobile-ui #touch-controls { display: contents; }
+.mobile-ui :is(.move-pad, .height-pad) { display: grid; gap: 4px; pointer-events: auto; }
+.mobile-ui .move-pad { grid-column: 1; grid-row: 1 / 3; grid-template-columns: repeat(3, 46px); }
+.mobile-ui .move-pad [data-key="KeyW"] { grid-column: 2; }
+.mobile-ui .move-pad [data-key="KeyA"] { grid-column: 1; }
+.mobile-ui .height-pad { grid-column: 2; grid-row: 2; grid-template-columns: repeat(2, 46px); justify-content: end; }
+.mobile-ui .height-pad span {
+  grid-column: 1 / -1;
+  padding: 3px 5px;
+  background: #15271fea;
+  border-radius: 5px;
+  font-size: 10px;
+}
+.mobile-ui #touch-controls button {
+  width: 46px;
+  height: 46px;
+  margin: 0;
+  border-radius: 10px;
+  font-size: 22px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.mobile-ui #touch-controls button[data-held] { background: #5b8061; }
+.mobile-ui #door-action {
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  transform: none;
+  min-height: 44px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: normal;
+  pointer-events: auto;
+}
+.mobile-ui #door-action kbd { display: none; }
+.mobile-ui dialog { width: calc(100% - var(--phone-left) - var(--phone-right)); max-height: 90dvh; }
+.mobile-ui .dialog-heading { padding: 14px 64px 12px 16px; }
+.mobile-ui dialog h2 { font-size: clamp(19px, 6vw, 25px); overflow-wrap: anywhere; }
+.mobile-ui .close { width: 44px; height: 44px; top: 8px; right: 8px; }
+.mobile-ui .board-bottom { display: flex; gap: 6px; padding: 10px 16px; }
+.mobile-ui .board-bottom :is(button, a) { display: inline-flex; align-items: center; min-height: 44px; }
+.mobile-ui .board-bottom p { flex-basis: 100%; }
+.mobile-ui #help-dialog { padding: 16px 60px 16px 16px; }
+.mobile-ui #loading { padding: max(18px, var(--phone-left)); }
+.mobile-ui .load-wrap h2 { font-size: clamp(38px, 12vw, 55px); }
+@media (max-height: 500px) {
+  .mobile-ui #room-caption { padding: 5px 9px; }
+  .mobile-ui #room-caption h2 { font-size: 16px; }
+  .mobile-ui #walk-controls { grid-template-columns: auto minmax(0, 180px); }
+}

@@ -14,23 +14,25 @@ import {SSAOPass} from './vendor/postprocessing/SSAOPass.js';
 import {OutputPass} from './vendor/postprocessing/OutputPass.js';
 import {MeshoptDecoder} from './vendor/meshopt_decoder.mjs';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const phoneLayout = matchMedia('(max-width: 700px), (max-width: 1000px) and (pointer: coarse), (max-width: 1000px) and (max-height: 500px)');
 const scene=new THREE.Scene();scene.background=new THREE.Color('#dce2d7');scene.fog=new THREE.Fog('#dce2d7',38,115);
 const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.08,180);
 const planCamera=new THREE.OrthographicCamera(-15,15,10,-10,.1,150);let activeCamera=camera;
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.localClippingEnabled=true;
+renderer.setPixelRatio(Math.min(devicePixelRatio, phoneLayout.matches ? 1.35 : 2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.localClippingEnabled=true;
 $('#viewport').append(renderer.domElement);renderer.domElement.tabIndex=0;
 const composer=new EffectComposer(renderer);composer.renderTarget1.samples=4;composer.renderTarget2.samples=4;const renderPass=new RenderPass(scene,camera);composer.addPass(renderPass);const ao=new SSAOPass(scene,camera,innerWidth,innerHeight,12);ao.kernelRadius=.55;ao.minDistance=.001;ao.maxDistance=.12;composer.addPass(ao);composer.addPass(new OutputPass());
-function render(){renderPass.camera=activeCamera;ao.camera=activeCamera;ao.enabled=mode!=='plan'&&innerWidth>650&&camera.position.y<5;composer.render();renderer.domElement.dataset.meshes=meshes.length;renderer.domElement.dataset.mode=mode;renderer.domElement.dataset.room=room;renderer.domElement.dataset.camera=camera.position.toArray().map(n=>n.toFixed(2)).join(',');renderer.domElement.dataset.doorTransforms=JSON.stringify(doors.map(d=>({id:d.id,open:d.open,progress:+d.progress.toFixed(3),position:d.pivot.position.toArray().map(v=>+v.toFixed(3)),rotation:+d.pivot.rotation.y.toFixed(3)})));}
+function render(){renderPass.camera=activeCamera;ao.camera=activeCamera;ao.enabled=mode!=='plan'&&!phoneLayout.matches&&camera.position.y<5;composer.render();renderer.domElement.dataset.meshes=meshes.length;renderer.domElement.dataset.mode=mode;renderer.domElement.dataset.room=room;renderer.domElement.dataset.camera=camera.position.toArray().map(n=>n.toFixed(2)).join(',');renderer.domElement.dataset.doorTransforms=JSON.stringify(doors.map(d=>({id:d.id,open:d.open,progress:+d.progress.toFixed(3),position:d.pivot.position.toArray().map(v=>+v.toFixed(3)),rotation:+d.pivot.rotation.y.toFixed(3)})));}
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.maxDistance=45;controls.minDistance=.3;controls.maxPolarAngle=Math.PI*.495;
-const planControls=new OrbitControls(planCamera,renderer.domElement);planControls.enabled=false;planControls.enableRotate=false;planControls.enableDamping=true;planControls.maxZoom=10;planControls.minZoom=.5;
+const planControls=new OrbitControls(planCamera,renderer.domElement);planControls.enabled=false;planControls.enableRotate=false;planControls.touches.ONE=THREE.TOUCH.PAN;planControls.enableDamping=true;planControls.maxZoom=10;planControls.minZoom=.5;
 const hemi=new THREE.HemisphereLight('#e7efe7','#8f9174',1.1);scene.add(hemi);
 const sun=new THREE.DirectionalLight('#fff0d2',3.4);sun.position.set(-9,18,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-18,right:18,top:15,bottom:-15,near:.5,far:65});sun.shadow.bias=-.0002;sun.shadow.normalBias=.025;sun.shadow.radius=3;scene.add(sun);renderer.shadowMap.autoUpdate=false;
 const fill=new THREE.DirectionalLight('#e2ecf2',.45);fill.position.set(8,6,-12);scene.add(fill);
 const clip=new THREE.Plane(new THREE.Vector3(0,-1,0),2.6);
 const world=new THREE.Group();world.name='Shelter of Sky — catalogue Modern Tropical';scene.add(world);
 const lights=new THREE.Group();scene.add(lights);const decor=new THREE.Group();decor.name='Catalogue interior additions';scene.add(decor);
-let water,bedside,nearestDoor=null;const doors=[];let model,ready=false,mode='orbit',light='day',room='arrival',fading=null,tourTimer=null,tourIndex=0,dirty=true;const meshes=[],materials=new Map(),keys=new Set();let yaw=0,pitch=0,dragging=false,lastX=0,lastY=0,locked=false,lastFrame=0,lastMove=performance.now();
+let water,bedside,nearestDoor=null;const doors=[];let model,ready=false,mode='orbit',light='day',room='arrival',fading=null,tourTimer=null,tourIndex=0,dirty=true;const meshes=[],materials=new Map(),keys=new Set();let yaw=0,pitch=0,lookPointer=null,lastX=0,lastY=0,locked=false,lastFrame=0;
+const touchKeys = new Map();
 const ray=new THREE.Raycaster(),pointer=new THREE.Vector2(),clock=new THREE.Clock();const sourceOffset=new THREE.Vector3(53.4933507,0,-15.9854055);
 const rooms={
  arrival:{title:'Shelter of Sky',label:'01 / THE RETREAT',description:'Curved roofs. Open living. A garden between.',eye:[15,9,23],target:[0,1,0]},
@@ -93,29 +95,135 @@ function updateLamps(){decor.traverse(o=>{if(o.isMesh){const m=o.material;if(m.u
 function section(){renderer.shadowMap.needsUpdate=true;clip.constant=mode==='plan'?1.15:Number($('#section').value);const enabled=mode==='plan'||$('#cutaway').checked;for(const record of materials.values())for(const m of new Set([record.tropical,record.original,...Object.values(record.variants||{})])){m.clippingPlanes=enabled?[clip]:[];m.needsUpdate=true;}decor.traverse(o=>{if(o.isMesh){o.material.clippingPlanes=enabled?[clip]:[];o.material.needsUpdate=true;}});bedside?.setClipping(enabled?[clip]:[]);$('#height-value').value=Number($('#section').value).toFixed(2)+' m';dirty=true;}
 function caption(id){const r=rooms[id];$('#view-title').textContent=r.title;const notes=currentScheme==='mediterranean'?{living:'Generous linen upholstery, walnut and classic stone.',kitchen:'Walnut joinery, pale stone and warm bronze details.',west:'An arched ivory niche, soft linen and walnut.',east:'An arched ivory niche, soft linen and walnut.',bath:'Classic stone, bronze details and sculptural vessels.'}:currentScheme==='scandi'?{living:'Low oak furniture, oatmeal linen and paper lanterns.',kitchen:'Natural oak, light stone and restrained crafted details.',west:'Natural oak, oatmeal linen and quiet botanical art.',east:'Natural oak, oatmeal linen and quiet botanical art.',bath:'Pale stone, warm oak and brushed brass.'}:{};$('#view-description').textContent=notes[id]||r.description;$('#view-number').textContent=r.label;$$('[data-room]').forEach(b=>b.classList.toggle('selected',b.dataset.room===id));}
 function goRoom(id,animate=true){if(!ready)return;room=id;caption(id);if(mode==='plan')setMode('orbit',false);else if(mode==='walk'){setMode('orbit',false);}const r=rooms[id];controls.minDistance=id==='arrival'?2:.2;controls.maxPolarAngle=Math.PI*.95;const to=new THREE.Vector3(...r.eye),target=new THREE.Vector3(...r.target);if(animate)fading={from:camera.position.clone(),targetFrom:controls.target.clone(),to,target,start:performance.now()};else{camera.position.copy(to);controls.target.copy(target);camera.lookAt(target);}dirty=true;}
-function stopTour(){if(tourTimer)clearInterval(tourTimer);tourTimer=null;$('#tour').setAttribute('aria-pressed','false');$('#tour').innerHTML='▷ <span>Guided tour</span>';}
-function setMode(id,reset=true){if(!ready)return;fading=null;keys.clear();mode=id;controls.enabled=id==='orbit';planControls.enabled=id==='plan';if(id!=='walk'&&document.pointerLockElement)document.exitPointerLock();activeCamera=id==='plan'?planCamera:camera;$$('[data-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.mode===id));$('#walk-tip').hidden=id!=='walk';$('#touch-controls').hidden=id!=='walk'||!matchMedia('(pointer:coarse)').matches;
+function stopTour(){if(tourTimer)clearInterval(tourTimer);tourTimer=null;$('#tour').setAttribute('aria-pressed','false');$('#tour').setAttribute('aria-label','Guided tour');$('#tour').innerHTML='▷ <span>Guided tour</span>';}
+function setMode(id,reset=true){if(!ready)return;fading=null;clearWalkInput();mode=id;controls.enabled=id==='orbit';planControls.enabled=id==='plan';if(id!=='walk'&&document.pointerLockElement)document.exitPointerLock();activeCamera=id==='plan'?planCamera:camera;$$('[data-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.mode===id));syncWalkUI();if(id==='walk'&&phoneLayout.matches)setPanel(false);
  if(id==='plan'){planCamera.position.set(0,35,0);planCamera.up.set(0,0,-1);planControls.target.set(0,0,0);planCamera.lookAt(0,0,0);planCamera.zoom=1;planCamera.updateProjectionMatrix();caption('arrival');$('#view-title').textContent='The furnished plan';$('#view-description').textContent='Double-click a floor to enter the space.';}
  if(id==='walk'){if(reset){const r=rooms[room==='arrival'?'terrace':room];camera.position.fromArray(r.eye);camera.lookAt(new THREE.Vector3(...r.target));}camera.rotation.order='YXZ';yaw=camera.rotation.y;pitch=camera.rotation.x;renderer.domElement.focus();}
  if(id==='orbit'&&reset)goRoom(room);section();$('#hint').textContent=id==='orbit'?'Drag to orbit · Scroll to zoom':id==='plan'?'Drag to pan · Scroll to zoom · Double-click to enter':'W A S D to move · Drag to look';dirty=true;}
-function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();const h=innerWidth<650?15:10;planCamera.left=-h*camera.aspect;planCamera.right=h*camera.aspect;planCamera.top=h;planCamera.bottom=-h;planCamera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);dirty=true;}
-$$('[data-room]').forEach(b=>b.onclick=()=>{stopTour();goRoom(b.dataset.room);if(innerWidth<650){document.body.classList.add('panel-hidden');$('#panel-toggle').setAttribute('aria-expanded','false')}});$$('[data-mode]').forEach(b=>b.onclick=()=>{stopTour();setMode(b.dataset.mode)});$$('[data-light]').forEach(b=>b.onclick=()=>setLight(b.dataset.light));$('#lamps').onchange=updateLamps;$('#cutaway').onchange=section;$('#section').oninput=section;$('#garden').onchange=e=>{garden.visible=e.target.checked;dirty=true};$('#finishes').onchange=e=>{for(const [o,m] of materials){o.material=e.target.checked?(m.active||m.tropical):m.original;o.geometry=e.target.checked?(m.activeGeometry||m.tropicalGeometry):m.geometry;}decor.visible=e.target.checked;section();dirty=true};
-$('#panel-toggle').onclick=()=>{const hidden=document.body.classList.toggle('panel-hidden');$('#panel-toggle').setAttribute('aria-expanded',String(!hidden))};if(innerWidth<650){document.body.classList.add('panel-hidden');$('#panel-toggle').setAttribute('aria-expanded','false')}
+function syncWalkUI() {
+ const walking = mode === 'walk';
+ $('#walk-tip').hidden = !walking || phoneLayout.matches;
+ $('#touch-controls').hidden = !walking || !phoneLayout.matches;
+ $('#phone-hint').textContent = walking ? 'Hold arrows to move · Drag to look'
+  : mode === 'plan' ? 'Drag to pan · Pinch to zoom' : 'Drag to orbit · Pinch to zoom';
+}
+function clearWalkInput() {
+ keys.clear();
+ touchKeys.clear();
+ lookPointer = null;
+ $$('[data-held]').forEach(button => button.removeAttribute('data-held'));
+}
+function setPanel(open) {
+ document.body.classList.toggle('panel-hidden', !open);
+ $('#panel').inert = !open;
+ $('#panel-toggle').setAttribute('aria-expanded', String(open));
+ if (open && phoneLayout.matches) clearWalkInput();
+}
+function syncPhoneLayout() {
+ const phone = phoneLayout.matches;
+ document.body.classList.toggle('mobile-ui', phone);
+ setPanel(!phone);
+ syncWalkUI();
+}
+function resize() {
+ const width = innerWidth;
+ const height = innerHeight;
+ const pixelRatio = Math.min(devicePixelRatio, phoneLayout.matches ? 1.35 : 2);
+ camera.aspect = width / height;
+ camera.fov = phoneLayout.matches ? THREE.MathUtils.clamp(48 / Math.sqrt(camera.aspect), 48, 77) : 48;
+ camera.updateProjectionMatrix();
+ const halfHeight = phoneLayout.matches ? Math.max(10, 13 / camera.aspect) : 10;
+ planCamera.left = -halfHeight * camera.aspect;
+ planCamera.right = halfHeight * camera.aspect;
+ planCamera.top = halfHeight;
+ planCamera.bottom = -halfHeight;
+ planCamera.updateProjectionMatrix();
+ const samples = phoneLayout.matches ? 2 : 4;
+ composer.renderTarget1.samples = samples;
+ composer.renderTarget2.samples = samples;
+ if (renderer.getPixelRatio() !== pixelRatio) {
+  renderer.setPixelRatio(pixelRatio);
+  composer.setPixelRatio(pixelRatio);
+ }
+ renderer.setSize(width, height);
+ composer.setSize(width, height);
+ dirty = true;
+}
+$$('[data-room]').forEach(button => button.onclick = () => {
+ stopTour();
+ goRoom(button.dataset.room);
+ if (phoneLayout.matches) setPanel(false);
+});
+$$('[data-mode]').forEach(b=>b.onclick=()=>{stopTour();setMode(b.dataset.mode)});$$('[data-light]').forEach(b=>b.onclick=()=>setLight(b.dataset.light));$('#lamps').onchange=updateLamps;$('#cutaway').onchange=section;$('#section').oninput=section;$('#garden').onchange=e=>{garden.visible=e.target.checked;dirty=true};$('#finishes').onchange=e=>{for(const [o,m] of materials){o.material=e.target.checked?(m.active||m.tropical):m.original;o.geometry=e.target.checked?(m.activeGeometry||m.tropicalGeometry):m.geometry;}decor.visible=e.target.checked;section();dirty=true};
+$('#panel-toggle').onclick = () => setPanel(document.body.classList.contains('panel-hidden'));
+syncPhoneLayout();
+phoneLayout.addEventListener('change', () => {
+ clearWalkInput();
+ syncPhoneLayout();
+ resize();
+});
 function showBoard(exterior=false){const theme=schemeManifest[ready?currentScheme:desiredScheme];$('#board-dialog img').src=exterior?'assets/catalogue-exterior.jpg':theme.board;$('#board-dialog img').alt=exterior?'Original Shelter of Sky exterior material sheet, catalogue page 6':theme.name+' original Shelter of Sky moodboard, catalogue page '+theme.page;$('#board-dialog h2').textContent=exterior?theme.name+' · Exterior materials':theme.name;$('#board-dialog .dialog-heading>p:last-child').textContent=theme.caption;$('#board-source').textContent='Original catalogue artwork · To Breathe, Shelter of Sky · page '+(exterior?6:theme.page)+'.';$('#board-interior').textContent='Interior · p. '+theme.page;$('#board-dialog .board-bottom a').href=exterior?'assets/catalogue-exterior.jpg':theme.board;if(!$('#board-dialog').open)$('#board-dialog').showModal();}
 $('#board-open').onclick=()=>showBoard();$('#loading-board').onclick=()=>showBoard();$('#board-interior').onclick=()=>showBoard();$('#board-exterior').onclick=()=>showBoard(true);$('#help').onclick=()=>$('#help-dialog').showModal();$$('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());$$('dialog').forEach(d=>d.onclick=e=>{if(e.target===d)d.close()});
-$('#tour').onclick=()=>{if(tourTimer){stopTour();return;}const order=Object.keys(rooms);tourIndex=0;goRoom(order[tourIndex]);$('#tour').setAttribute('aria-pressed','true');$('#tour').innerHTML='Ⅱ <span>Pause tour</span>';tourTimer=setInterval(()=>{tourIndex++;if(tourIndex>=order.length){stopTour();return;}goRoom(order[tourIndex]);},7500)};
+$('#tour').onclick=()=>{if(tourTimer){stopTour();return;}const order=Object.keys(rooms);tourIndex=0;goRoom(order[tourIndex]);$('#tour').setAttribute('aria-pressed','true');$('#tour').setAttribute('aria-label','Pause tour');$('#tour').innerHTML='Ⅱ <span>Pause tour</span>';tourTimer=setInterval(()=>{tourIndex++;if(tourIndex>=order.length){stopTour();return;}goRoom(order[tourIndex]);},7500)};
 $('#capture').onclick=()=>{render();renderer.domElement.toBlob(blob=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`shelter-of-sky-${currentScheme}-${room}-${light}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);})};
-renderer.domElement.addEventListener('pointerdown',e=>{stopTour();fading=null;if(mode!=='walk')return;dragging=true;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId);renderer.domElement.focus();});
-renderer.domElement.addEventListener('pointermove',e=>{if(mode==='walk'&&dragging&&!locked){yaw-=(e.clientX-lastX)*.004;pitch=THREE.MathUtils.clamp(pitch-(e.clientY-lastY)*.004,-1.45,1.45);lastX=e.clientX;lastY=e.clientY;dirty=true;}});renderer.domElement.addEventListener('pointerup',()=>dragging=false);renderer.domElement.addEventListener('dblclick',e=>{if(mode==='walk'){try{renderer.domElement.requestPointerLock()?.catch(()=>{});}catch{}return;}pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);ray.setFromCamera(pointer,activeCamera);const hit=ray.intersectObjects(meshes,false).find(h=>!(mode==='plan'||$('#cutaway').checked)||h.point.y<=clip.constant);if(!hit)return;if(mode==='plan'){setMode('walk',false);camera.position.copy(hit.point).add(new THREE.Vector3(0,1.65,0));yaw=0;pitch=-.08;}else controls.target.copy(hit.point);dirty=true;});
-let doorPress=null;renderer.domElement.addEventListener('pointerdown',e=>doorPress=[e.clientX,e.clientY]);renderer.domElement.addEventListener('click',e=>{if(!doorPress||Math.hypot(e.clientX-doorPress[0],e.clientY-doorPress[1])>6)return;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);ray.setFromCamera(pointer,activeCamera);const hits=ray.intersectObjects([...meshes,...(bedside?.meshes||[])],false);for(const hit of hits){if(hit.object.userData.bedsideLamp){if(mode!=='walk'||hit.distance<3.5)bedside.toggle(hit.object.userData.bedsideLamp);break;}if(hit.object.userData.interactiveDoor){if(mode==='walk'&&hit.distance<3.5)toggleDoor(hit.object.userData.interactiveDoor);break;}if(!hit.object.material.transparent)break;}});
+const canvas = renderer.domElement;
+let doorPress = null;
+canvas.addEventListener('pointerdown', event => {
+ stopTour();
+ fading = null;
+ if (mode === 'walk' && (lookPointer !== null || event.button !== 0)) return;
+ doorPress = [event.clientX, event.clientY];
+ if (mode !== 'walk') return;
+ lookPointer = event.pointerId;
+ lastX = event.clientX;
+ lastY = event.clientY;
+ canvas.setPointerCapture(event.pointerId);
+ canvas.focus({preventScroll:true});
+});
+canvas.addEventListener('pointermove', event => {
+ if (event.pointerId !== lookPointer || locked) return;
+ if (doorPress && Math.hypot(event.clientX - doorPress[0], event.clientY - doorPress[1]) > 6) doorPress = null;
+ yaw -= (event.clientX - lastX) * .004;
+ pitch = THREE.MathUtils.clamp(pitch - (event.clientY - lastY) * .004, -1.45, 1.45);
+ lastX = event.clientX;
+ lastY = event.clientY;
+ dirty = true;
+});
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+ canvas.addEventListener(type, event => {
+  if (event.pointerId === lookPointer) lookPointer = null;
+  if (type === 'pointercancel') doorPress = null;
+ });
+}
+renderer.domElement.addEventListener('dblclick',e=>{if(mode==='walk'){if(phoneLayout.matches||e.pointerType==='touch')return;try{renderer.domElement.requestPointerLock()?.catch(()=>{});}catch{}return;}pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);ray.setFromCamera(pointer,activeCamera);const hit=ray.intersectObjects(meshes,false).find(h=>!(mode==='plan'||$('#cutaway').checked)||h.point.y<=clip.constant);if(!hit)return;if(mode==='plan'){setMode('walk',false);camera.position.copy(hit.point).add(new THREE.Vector3(0,1.65,0));yaw=0;pitch=-.08;}else controls.target.copy(hit.point);dirty=true;});
+renderer.domElement.addEventListener('click',e=>{if(!doorPress||Math.hypot(e.clientX-doorPress[0],e.clientY-doorPress[1])>6)return;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);ray.setFromCamera(pointer,activeCamera);const hits=ray.intersectObjects([...meshes,...(bedside?.meshes||[])],false);for(const hit of hits){if(hit.object.userData.bedsideLamp){if(mode!=='walk'||hit.distance<3.5)bedside.toggle(hit.object.userData.bedsideLamp);break;}if(hit.object.userData.interactiveDoor){if(mode==='walk'&&hit.distance<3.5)toggleDoor(hit.object.userData.interactiveDoor);break;}if(!hit.object.material.transparent)break;}});
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement;keys.clear()});document.addEventListener('mousemove',e=>{if(locked&&mode==='walk'){yaw-=e.movementX*.002;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.002,-1.45,1.45);dirty=true;}});
-window.addEventListener('keydown',e=>{if(e.target.matches('input,select,button')||$('dialog[open]'))return;if(e.code==='KeyF'&&mode==='walk'){if(nearestDoor)toggleDoor(nearestDoor);e.preventDefault();return;}if(e.code==='Escape'){stopTour();if(mode==='walk')setMode('orbit');return;}if(mode==='walk'&&/^(Key[WASDQE]|Arrow|Shift)/.test(e.code)){e.preventDefault();keys.add(e.code)}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();dragging=false});$$('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();keys.add(b.dataset.key);b.setPointerCapture(e.pointerId)};b.onpointerup=b.onpointercancel=()=>keys.delete(b.dataset.key)});
+window.addEventListener('keydown',e=>{if(e.target.matches('input,select,button')||$('dialog[open]'))return;if(e.code==='KeyF'&&mode==='walk'){if(nearestDoor)toggleDoor(nearestDoor);e.preventDefault();return;}if(e.code==='Escape'){stopTour();if(mode==='walk')setMode('orbit');return;}if(mode==='walk'&&/^(Key[WASDQE]|Arrow|Shift)/.test(e.code)){e.preventDefault();keys.add(e.code)}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur', clearWalkInput);
+document.addEventListener('visibilitychange', () => {
+ if (document.hidden) clearWalkInput();
+});
+for (const button of $$('[data-key]')) {
+ button.addEventListener('pointerdown', event => {
+  if (mode !== 'walk' || event.button !== 0) return;
+  event.preventDefault();
+  button.setPointerCapture(event.pointerId);
+  touchKeys.set(event.pointerId, button.dataset.key);
+  button.setAttribute('data-held', '');
+ });
+ for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+  button.addEventListener(type, event => {
+   touchKeys.delete(event.pointerId);
+   if (![...touchKeys.values()].includes(button.dataset.key)) button.removeAttribute('data-held');
+  });
+ }
+ button.addEventListener('contextmenu', event => event.preventDefault());
+}
 function canMove(from,delta){const len=delta.length();ray.far=len+.2;let clear=true;for(const h of [0,-.8]){ray.set(from.clone().add(new THREE.Vector3(0,h,0)),delta.clone().normalize());if(ray.intersectObjects([...meshes,decor],true).some(h=>!h.object.material.transparent)){clear=false;break;}}ray.far=Infinity;return clear;}
-function animate(t){requestAnimationFrame(animate);if(document.hidden)return;if(t-lastFrame<1000/35)return;const dt=Math.min((t-lastFrame)/1000,.05);lastFrame=t;
+function animate(t){requestAnimationFrame(animate);if(document.hidden)return;if(t-lastFrame<1000/(phoneLayout.matches?30:35))return;const dt=Math.min((t-lastFrame)/1000,.05);lastFrame=t;
  if(fading){const u=THREE.MathUtils.clamp((t-fading.start)/1600,0,1),s=u*u*(3-2*u);camera.position.lerpVectors(fading.from,fading.to,s);controls.target.lerpVectors(fading.targetFrom,fading.target,s);camera.lookAt(controls.target);if(u===1)fading=null;dirty=true;}
  if(mode==='orbit'&&controls.update())dirty=true;if(mode==='plan'&&planControls.update())dirty=true;
- if(mode==='walk'){camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0);if(keys.size){const x=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0),z=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0),v=new THREE.Vector3(x,0,z);if(v.lengthSq()){v.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(dt*(keys.has('ShiftLeft')?3.2:1.5));for(const d of [new THREE.Vector3(v.x,0,0),new THREE.Vector3(0,0,v.z)])if(d.lengthSq()&&canMove(camera.position,d))camera.position.add(d);}camera.position.y+=((keys.has('KeyE')?1:0)-(keys.has('KeyQ')?1:0))*dt;camera.position.y=THREE.MathUtils.clamp(camera.position.y,.35,7);camera.position.x=THREE.MathUtils.clamp(camera.position.x,-25,25);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-20,20);dirty=true;}}
- if(water&&$('#water-motion').checked&&mode!=='plan'){water.material.uniforms.time.value+=dt*.35;dirty=true;}for(const d of doors){const next=THREE.MathUtils.damp(d.progress,d.open?1:0,6,dt);if(Math.abs(next-d.progress)>.0001){d.progress=next;if(d.type==='slide')d.pivot.position.copy(d.hinge).addScaledVector(d.travel,next);else d.pivot.rotation.y=next*-Math.PI*.52;renderer.shadowMap.needsUpdate=true;dirty=true;}}updateDoorPrompt();if(dirty||mode==='walk'){render();dirty=false;}
+ if(mode==='walk'){camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0);const movement = touchKeys.size ? new Set([...keys, ...touchKeys.values()]) : keys;if(movement.size){const x=(movement.has('KeyD')||movement.has('ArrowRight')?1:0)-(movement.has('KeyA')||movement.has('ArrowLeft')?1:0),z=(movement.has('KeyS')||movement.has('ArrowDown')?1:0)-(movement.has('KeyW')||movement.has('ArrowUp')?1:0),v=new THREE.Vector3(x,0,z);if(v.lengthSq()){v.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(dt*(movement.has('ShiftLeft')?3.2:1.5));for(const d of [new THREE.Vector3(v.x,0,0),new THREE.Vector3(0,0,v.z)])if(d.lengthSq()&&canMove(camera.position,d))camera.position.add(d);}camera.position.y+=((movement.has('KeyE')?1:0)-(movement.has('KeyQ')?1:0))*dt;camera.position.y=THREE.MathUtils.clamp(camera.position.y,.35,7);camera.position.x=THREE.MathUtils.clamp(camera.position.x,-25,25);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-20,20);dirty=true;}}
+ if(water&&$('#water-motion').checked&&mode!=='plan'){water.material.uniforms.time.value+=dt*.35;dirty=true;}for(const d of doors){const next=THREE.MathUtils.damp(d.progress,d.open?1:0,6,dt);if(Math.abs(next-d.progress)>.0001){d.progress=next;if(d.type==='slide')d.pivot.position.copy(d.hinge).addScaledVector(d.travel,next);else d.pivot.rotation.y=next*-Math.PI*.52;renderer.shadowMap.needsUpdate=true;dirty=true;}}if(dirty){updateDoorPrompt();render();dirty=false;}
 }
 requestAnimationFrame(animate);window.addEventListener('resize',resize);resize();
 for(const event of ['click','input','change'])document.addEventListener(event,()=>dirty=true);
@@ -131,7 +239,11 @@ async function loadDoors(loader){
 }
 function syncDoorControls(){renderer.domElement.dataset.doorStates=doors.map(d=>d.id+':'+(d.open?'open':'closed')).join(',');for(const d of doors){const b=$(`[data-door-id="${d.id}"]`);if(b){b.setAttribute('aria-pressed',String(d.open));b.lastElementChild.textContent=d.open?'Close':'Open';}}$('#all-doors').textContent=doors.length&&doors.every(d=>d.open)?'Close all doors':'Open all doors';}
 function toggleDoor(d,open=!d.open){d.open=open;syncDoorControls();dirty=true;}
-function updateDoorPrompt(){nearestDoor=null;if(mode==='walk'){let distance=3;for(const d of doors){const n=camera.position.distanceTo(d.closedCenter);if(n<distance){const direction=d.closedCenter.clone().sub(camera.position);ray.set(camera.position,direction.clone().normalize());ray.far=n;const blocker=ray.intersectObjects(meshes,false).find(h=>!h.object.material.transparent&&h.object.userData.interactiveDoor!==d);ray.far=Infinity;if(!blocker){distance=n;nearestDoor=d;}}}}$('#door-action').hidden=!nearestDoor;if(nearestDoor)$('#door-action').innerHTML=(nearestDoor.open?'Close ':'Open ')+nearestDoor.label+' <kbd>F</kbd>';}
+function updateDoorPrompt(){nearestDoor=null;if(mode==='walk'){let distance=3;for(const d of doors){const n=camera.position.distanceTo(d.closedCenter);if(n<distance){const direction=d.closedCenter.clone().sub(camera.position);ray.set(camera.position,direction.clone().normalize());ray.far=n;const blocker=ray.intersectObjects(meshes,false).find(h=>!h.object.material.transparent&&h.object.userData.interactiveDoor!==d);ray.far=Infinity;if(!blocker){distance=n;nearestDoor=d;}}}}$('#door-action').hidden=!nearestDoor;if(nearestDoor){
+ const label=(nearestDoor.open?'Close ':'Open ')+nearestDoor.label;
+ const text=$('#door-action span');
+ if(text.textContent!==label)text.textContent=label;
+ }}
 $('#door-action').onclick=()=>{if(nearestDoor)toggleDoor(nearestDoor);renderer.domElement.focus()};$('#all-doors').onclick=()=>{const open=doors.some(d=>!d.open);doors.forEach(d=>toggleDoor(d,open));$('#all-doors').textContent=open?'Close all doors':'Open all doors';};$('#water-motion').onchange=()=>dirty=true;
 function updateSchemeUI(id){const theme=schemeManifest[id];$('#design-scheme').value=id;$('#scheme-caption').textContent=theme.caption;$('#board-open img').src=theme.board;$('#board-open img').alt=theme.name+' original catalogue moodboard';$('#board-open span').innerHTML=theme.name+' <i>View moodboard ↗</i>';document.title='Shelter of Sky — '+theme.name;$('.source-note').innerHTML='Original SketchUp architecture · catalogue-led interiors.<br>Interior p. '+theme.page+' · exterior p. 6.';const colors={tropical:['#b78a59','#d8cdb9','#eee5d7','#4b5040','#37352f'],mediterranean:['#e8ddcd','#cbb592','#aa7847','#61442d','#987c53'],scandi:['#ddd3bc','#c5a06b','#e6ddca','#b8b9a4','#a18a53']}[id];$$('.palette i').forEach((el,i)=>el.style.setProperty('--swatch',colors[i]));$('.palette span').textContent=theme.caption;renderer.domElement.dataset.scheme=id;}
 async function applyScheme(id,initial=false){if(schemeBusy||!schemeManifest[id])return;schemeBusy=true;$('#design-scheme').disabled=true;$('#status').textContent='Opening '+schemeManifest[id].name+'…';try{
