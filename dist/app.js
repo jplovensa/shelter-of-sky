@@ -33,6 +33,9 @@ const world=new THREE.Group();world.name='Shelter of Sky — catalogue Modern Tr
 const lights=new THREE.Group();scene.add(lights);const decor=new THREE.Group();decor.name='Catalogue interior additions';scene.add(decor);
 let water,bedside,nearestDoor=null;const doors=[];let model,ready=false,mode='orbit',light='day',room='arrival',fading=null,tourTimer=null,tourIndex=0,dirty=true;const meshes=[],materials=new Map(),keys=new Set();let yaw=0,pitch=0,lookPointer=null,lastX=0,lastY=0,locked=false,lastFrame=0;
 const touchKeys = new Map();
+const moveStick = $('#move-stick');
+const moveInput = new THREE.Vector2();
+let movePointer = null;
 const ray=new THREE.Raycaster(),pointer=new THREE.Vector2(),clock=new THREE.Clock();const sourceOffset=new THREE.Vector3(53.4933507,0,-15.9854055);
 const rooms={
  arrival:{title:'Shelter of Sky',label:'01 / THE RETREAT',description:'Curved roofs. Open living. A garden between.',eye:[15,9,23],target:[0,1,0]},
@@ -104,12 +107,13 @@ function syncWalkUI() {
  const walking = mode === 'walk';
  $('#walk-tip').hidden = !walking || phoneLayout.matches;
  $('#touch-controls').hidden = !walking || !phoneLayout.matches;
- $('#phone-hint').textContent = walking ? 'Hold arrows to move · Drag to look'
+ $('#phone-hint').textContent = walking ? 'Left stick to move · Drag scene to look'
   : mode === 'plan' ? 'Drag to pan · Pinch to zoom' : 'Drag to orbit · Pinch to zoom';
 }
 function clearWalkInput() {
  keys.clear();
  touchKeys.clear();
+ resetMoveStick();
  lookPointer = null;
  $$('[data-held]').forEach(button => button.removeAttribute('data-held'));
 }
@@ -202,6 +206,49 @@ window.addEventListener('keydown',e=>{if(e.target.matches('input,select,button')
 document.addEventListener('visibilitychange', () => {
  if (document.hidden) clearWalkInput();
 });
+
+function updateMoveStick(event) {
+ const bounds = moveStick.getBoundingClientRect();
+ const radius = bounds.width * .28;
+ const dx = event.clientX - (bounds.left + bounds.width / 2);
+ const dy = event.clientY - (bounds.top + bounds.height / 2);
+ const distance = Math.hypot(dx, dy);
+ const travel = Math.min(distance, radius);
+ const angle = Math.atan2(dy, dx);
+ moveStick.style.setProperty('--stick-x', `${Math.cos(angle) * travel}px`);
+ moveStick.style.setProperty('--stick-y', `${Math.sin(angle) * travel}px`);
+
+ // A small dead zone keeps the camera still when a thumb rests in the center.
+ const strength = Math.max(0, (travel / radius - .12) / .88) ** 1.5;
+ moveInput.set(Math.cos(angle) * strength, Math.sin(angle) * strength);
+}
+function resetMoveStick() {
+ const pointer = movePointer;
+ movePointer = null;
+ moveInput.set(0, 0);
+ moveStick.removeAttribute('data-active');
+ moveStick.style.removeProperty('--stick-x');
+ moveStick.style.removeProperty('--stick-y');
+ if (pointer !== null && moveStick.hasPointerCapture(pointer)) moveStick.releasePointerCapture(pointer);
+}
+moveStick.addEventListener('pointerdown', event => {
+ if (mode !== 'walk' || movePointer !== null || event.button !== 0) return;
+ event.preventDefault();
+ movePointer = event.pointerId;
+ moveStick.setPointerCapture(movePointer);
+ moveStick.setAttribute('data-active', '');
+ updateMoveStick(event);
+});
+moveStick.addEventListener('pointermove', event => {
+ if (event.pointerId === movePointer) updateMoveStick(event);
+});
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+ moveStick.addEventListener(type, event => {
+  if (event.pointerId === movePointer) resetMoveStick();
+ });
+}
+moveStick.addEventListener('contextmenu', event => event.preventDefault());
+
 for (const button of $$('[data-key]')) {
  button.addEventListener('pointerdown', event => {
   if (mode !== 'walk' || event.button !== 0) return;
@@ -219,10 +266,32 @@ for (const button of $$('[data-key]')) {
  button.addEventListener('contextmenu', event => event.preventDefault());
 }
 function canMove(from,delta){const len=delta.length();ray.far=len+.2;let clear=true;for(const h of [0,-.8]){ray.set(from.clone().add(new THREE.Vector3(0,h,0)),delta.clone().normalize());if(ray.intersectObjects([...meshes,decor],true).some(h=>!h.object.material.transparent)){clear=false;break;}}ray.far=Infinity;return clear;}
+function moveInWalkMode(dt) {
+ camera.rotation.order = 'YXZ';
+ camera.rotation.set(pitch, yaw, 0);
+ const x = moveInput.x + Number(keys.has('KeyD') || keys.has('ArrowRight')) - Number(keys.has('KeyA') || keys.has('ArrowLeft'));
+ const z = moveInput.y + Number(keys.has('KeyS') || keys.has('ArrowDown')) - Number(keys.has('KeyW') || keys.has('ArrowUp'));
+ const height = Number(keys.has('KeyE') || [...touchKeys.values()].includes('KeyE'))
+  - Number(keys.has('KeyQ') || [...touchKeys.values()].includes('KeyQ'));
+ if (!x && !z && !height) return;
+ if (x || z) {
+  const step = new THREE.Vector3(x, 0, z).clampLength(0, 1)
+   .applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw)
+   .multiplyScalar(dt * (keys.has('ShiftLeft') ? 3.2 : 1.5));
+  // Separate axes allow the camera to slide along a wall.
+  for (const delta of [new THREE.Vector3(step.x, 0, 0), new THREE.Vector3(0, 0, step.z)]) {
+   if (delta.lengthSq() && canMove(camera.position, delta)) camera.position.add(delta);
+  }
+ }
+ camera.position.y = THREE.MathUtils.clamp(camera.position.y + height * dt, .35, 7);
+ camera.position.x = THREE.MathUtils.clamp(camera.position.x, -25, 25);
+ camera.position.z = THREE.MathUtils.clamp(camera.position.z, -20, 20);
+ dirty = true;
+}
 function animate(t){requestAnimationFrame(animate);if(document.hidden)return;if(t-lastFrame<1000/(phoneLayout.matches?30:35))return;const dt=Math.min((t-lastFrame)/1000,.05);lastFrame=t;
  if(fading){const u=THREE.MathUtils.clamp((t-fading.start)/1600,0,1),s=u*u*(3-2*u);camera.position.lerpVectors(fading.from,fading.to,s);controls.target.lerpVectors(fading.targetFrom,fading.target,s);camera.lookAt(controls.target);if(u===1)fading=null;dirty=true;}
  if(mode==='orbit'&&controls.update())dirty=true;if(mode==='plan'&&planControls.update())dirty=true;
- if(mode==='walk'){camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0);const movement = touchKeys.size ? new Set([...keys, ...touchKeys.values()]) : keys;if(movement.size){const x=(movement.has('KeyD')||movement.has('ArrowRight')?1:0)-(movement.has('KeyA')||movement.has('ArrowLeft')?1:0),z=(movement.has('KeyS')||movement.has('ArrowDown')?1:0)-(movement.has('KeyW')||movement.has('ArrowUp')?1:0),v=new THREE.Vector3(x,0,z);if(v.lengthSq()){v.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(dt*(movement.has('ShiftLeft')?3.2:1.5));for(const d of [new THREE.Vector3(v.x,0,0),new THREE.Vector3(0,0,v.z)])if(d.lengthSq()&&canMove(camera.position,d))camera.position.add(d);}camera.position.y+=((movement.has('KeyE')?1:0)-(movement.has('KeyQ')?1:0))*dt;camera.position.y=THREE.MathUtils.clamp(camera.position.y,.35,7);camera.position.x=THREE.MathUtils.clamp(camera.position.x,-25,25);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-20,20);dirty=true;}}
+ if(mode==='walk')moveInWalkMode(dt);
  if(water&&$('#water-motion').checked&&mode!=='plan'){water.material.uniforms.time.value+=dt*.35;dirty=true;}for(const d of doors){const next=THREE.MathUtils.damp(d.progress,d.open?1:0,6,dt);if(Math.abs(next-d.progress)>.0001){d.progress=next;if(d.type==='slide')d.pivot.position.copy(d.hinge).addScaledVector(d.travel,next);else d.pivot.rotation.y=next*-Math.PI*.52;renderer.shadowMap.needsUpdate=true;dirty=true;}}if(dirty){updateDoorPrompt();render();dirty=false;}
 }
 requestAnimationFrame(animate);window.addEventListener('resize',resize);resize();
